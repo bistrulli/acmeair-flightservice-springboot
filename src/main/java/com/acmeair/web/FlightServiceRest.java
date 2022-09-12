@@ -19,9 +19,11 @@ package com.acmeair.web;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,81 +38,90 @@ import com.acmeair.service.FlightService;
 @RequestMapping("/")
 public class FlightServiceRest {
 
+	@Autowired
+	private FlightService flightService;
 
-  @Autowired
-  private FlightService flightService;
+	@Autowired
+	private SecurityUtils secUtils;
 
-  @Autowired
-  private SecurityUtils secUtils;
+	@Value("${ms.hw}")
+	private Float hw;
 
-  /**
-   * Get flights.
-   */
-  
-  @RequestMapping(value = "/queryflights", method = RequestMethod.POST, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-  public String getTripFlights(@RequestParam String fromAirport, @RequestParam String toAirport, 
-      @RequestParam Date fromDate, @RequestParam Date returnDate, @RequestParam Boolean oneWay) throws ParseException {
+	private static final AtomicInteger users = new AtomicInteger(0);
 
+	/**
+	 * Get flights.
+	 */
 
-    String options = "";
+	@RequestMapping(value = "/queryflights", method = RequestMethod.POST, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+	public String getTripFlights(@RequestParam String fromAirport, @RequestParam String toAirport,
+			@RequestParam Date fromDate, @RequestParam Date returnDate, @RequestParam Boolean oneWay)
+			throws ParseException {
 
-    List<String> toFlights = flightService.getFlightByAirportsAndDepartureDate(fromAirport, 
-        toAirport, fromDate);
+		String options = "";
 
-    if (!oneWay) {
-      
+		List<String> toFlights = flightService.getFlightByAirportsAndDepartureDate(fromAirport, toAirport, fromDate);
 
-      List<String> retFlights = flightService.getFlightByAirportsAndDepartureDate(toAirport, 
-          fromAirport, returnDate);
+		if (!oneWay) {
 
-      // TODO: Why are we doing it like this?
-      options = "{\"tripFlights\":"  
-          + "[{\"numPages\":1,\"flightsOptions\": " 
-          + toFlights 
-          + ",\"currentPage\":0,\"hasMoreOptions\":false,\"pageSize\":10}, " 
-          + "{\"numPages\":1,\"flightsOptions\": " 
-          + retFlights 
-          + ",\"currentPage\":0,\"hasMoreOptions\":false,\"pageSize\":10}], " 
-          + "\"tripLegs\":2}";
-    } else {
-      options = "{\"tripFlights\":" 
-          + "[{\"numPages\":1,\"flightsOptions\": " 
-          + toFlights 
-          + ",\"currentPage\":0,\"hasMoreOptions\":false,\"pageSize\":10}], " 
-          + "\"tripLegs\":1}";
-    }
-    
-    return options;
-  }
+			List<String> retFlights = flightService.getFlightByAirportsAndDepartureDate(toAirport, fromAirport,
+					returnDate);
 
-  /**
-   * Get reward miles for flight segment.
-   */
-  @RequestMapping(value = "/getrewardmiles", method = RequestMethod.POST, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE, produces = "application/json")
-  public RewardMilesResponse getRewardMiles(
-      @RequestHeader(name = "acmeair-id", required = false) String headerId,
-      @RequestHeader(name = "acmeair-date", required = false) String headerDate,
-      @RequestHeader(name = "acmeair-sig-body", required = false) String headerSigBody, 
-      @RequestHeader(name = "acmeair-signature", required = false) String headerSig,
-      @RequestParam String flightSegment
+			// TODO: Why are we doing it like this?
+			options = "{\"tripFlights\":" + "[{\"numPages\":1,\"flightsOptions\": " + toFlights
+					+ ",\"currentPage\":0,\"hasMoreOptions\":false,\"pageSize\":10}, "
+					+ "{\"numPages\":1,\"flightsOptions\": " + retFlights
+					+ ",\"currentPage\":0,\"hasMoreOptions\":false,\"pageSize\":10}], " + "\"tripLegs\":2}";
+		} else {
+			options = "{\"tripFlights\":" + "[{\"numPages\":1,\"flightsOptions\": " + toFlights
+					+ ",\"currentPage\":0,\"hasMoreOptions\":false,\"pageSize\":10}], " + "\"tripLegs\":1}";
+		}
+		
+		this.doWork(90l);
+		return options;
+	}
 
-      ) {
-    
-    if (secUtils.secureServiceCalls()) { 
-      String body = "flightSegment=" + flightSegment;
-      secUtils.verifyBodyHash(body, headerSigBody);
-      secUtils.verifyFullSignature("POST", "/getrewardmiles",headerId,headerDate,
-          headerSigBody,headerSig);
-    }
+	/**
+	 * Get reward miles for flight segment.
+	 */
+	@RequestMapping(value = "/getrewardmiles", method = RequestMethod.POST, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE, produces = "application/json")
+	public RewardMilesResponse getRewardMiles(@RequestHeader(name = "acmeair-id", required = false) String headerId,
+			@RequestHeader(name = "acmeair-date", required = false) String headerDate,
+			@RequestHeader(name = "acmeair-sig-body", required = false) String headerSigBody,
+			@RequestHeader(name = "acmeair-signature", required = false) String headerSig,
+			@RequestParam String flightSegment
 
-    Long miles = flightService.getRewardMiles(flightSegment); 
-    RewardMilesResponse result = new RewardMilesResponse();
-    result.miles = miles;
-    return result;
-  }
+	) {
 
-  @RequestMapping("/")
-  public String checkStatus() {
-    return "OK";        
-  }
+		if (secUtils.secureServiceCalls()) {
+			String body = "flightSegment=" + flightSegment;
+			secUtils.verifyBodyHash(body, headerSigBody);
+			secUtils.verifyFullSignature("POST", "/getrewardmiles", headerId, headerDate, headerSigBody, headerSig);
+		}
+
+		Long miles = flightService.getRewardMiles(flightSegment);
+		RewardMilesResponse result = new RewardMilesResponse();
+		result.miles = miles;
+		
+		this.doWork(50l);
+		return result;
+	}
+
+	@RequestMapping("/")
+	public String checkStatus() {
+		return "OK";
+	}
+	
+	private void doWork(long stime) {
+		FlightServiceRest.users.incrementAndGet();
+		Double isTime = Long.valueOf(stime).doubleValue();
+		Float d = (float) (isTime.floatValue() * (FlightServiceRest.users.floatValue() / this.hw));
+		try {
+			TimeUnit.MILLISECONDS.sleep(Math.max(Math.round(d), Math.round(isTime)));
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} finally {
+			FlightServiceRest.users.decrementAndGet();
+		}
+	}
 }
