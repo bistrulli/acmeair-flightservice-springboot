@@ -116,6 +116,8 @@ public abstract class FlightService {
       logger.fine("Search for flights from " + fromAirport + " to " + toAirport + " on " 
               + deptDate.toString());
     }
+    
+    System.out.println("flight service");
 
     String originPortAndDestPortQueryString = fromAirport + toAirport;
     String segment = null;
@@ -127,6 +129,7 @@ public abstract class FlightService {
         originAndDestPortToSegmentCache.putIfAbsent(originPortAndDestPortQueryString, segment);
       }
     } else {
+    System.out.println("no cache");
       segment = getFlightSegment(fromAirport, toAirport);
     }
     if (logger.isLoggable(Level.FINE)) {
@@ -197,6 +200,7 @@ public abstract class FlightService {
    * Get flight by aiports. Not cached
    */
   public List<String> getFlightByAirports(String fromAirport, String toAirport) {
+	System.out.println("should invoke getFlightSegment");
     String segment = getFlightSegment(fromAirport, toAirport);
     if (segment == null) {
       return new ArrayList<String>(); 
