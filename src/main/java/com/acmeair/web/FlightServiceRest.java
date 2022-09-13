@@ -59,6 +59,11 @@ public class FlightServiceRest {
 			throws ParseException {
 
 		String options = "";
+		
+		System.out.println(fromAirport);
+		System.out.println(toAirport);
+		System.out.println(fromDate);
+		System.out.println(returnDate);
 
 		List<String> toFlights = flightService.getFlightByAirportsAndDepartureDate(fromAirport, toAirport, fromDate);
 
