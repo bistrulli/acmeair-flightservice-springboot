@@ -122,9 +122,12 @@ public abstract class FlightService {
     String originPortAndDestPortQueryString = fromAirport + toAirport;
     String segment = null;
     if (useFlightDataRelatedCaching) {
+    	
+      System.out.println("trying from cache");
       segment = originAndDestPortToSegmentCache.get(originPortAndDestPortQueryString);
 
       if (segment == null) {
+    	System.out.println("cache miss");
         segment = getFlightSegment(fromAirport, toAirport);
         originAndDestPortToSegmentCache.putIfAbsent(originPortAndDestPortQueryString, segment);
       }
