@@ -126,6 +126,8 @@ public class FlightServiceImpl extends FlightService implements  MongoConstants 
     	 ObjectMapper mapper = new ObjectMapper();
          JsonNode segmentJson = mapper.readTree(segment);
       MongoCursor<Document> cursor;
+      
+      System.out.println("cerco il volo per data");
 
       if (deptDate != null) {
         if (logger.isLoggable(Level.FINE)) {
