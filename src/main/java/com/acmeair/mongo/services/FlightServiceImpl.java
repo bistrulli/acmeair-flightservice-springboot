@@ -137,6 +137,7 @@ public class FlightServiceImpl extends FlightService implements  MongoConstants 
         }
         
         System.out.println("data non null "+deptDate.toString());
+        System.out.println(segmentJson.get("_id").asText());
         
         cursor = flight.find(new BasicDBObject("flightSegmentId", segmentJson.get("_id").asText())
                 .append("scheduledDepartureTime", deptDate)).iterator();
