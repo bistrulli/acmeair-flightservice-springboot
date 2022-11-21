@@ -19,6 +19,7 @@ package com.acmeair.web;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -34,9 +35,14 @@ import org.springframework.web.bind.annotation.RestController;
 import com.acmeair.securityutils.SecurityUtils;
 import com.acmeair.service.FlightService;
 
+import ctrlmnt.ControllableService;
+import ctrlmnt.CtrlMNT;
+
 @RestController
 @RequestMapping("/")
-public class FlightServiceRest {
+public class FlightServiceRest implements ControllableService {
+
+	private static final AtomicInteger users = new AtomicInteger(0);
 
 	@Autowired
 	private FlightService flightService;
@@ -47,19 +53,24 @@ public class FlightServiceRest {
 	@Value("${ms.hw}")
 	private Float hw;
 
-	private static final AtomicInteger users = new AtomicInteger(0);
+	@Value("${ms.name}")
+	private String msname;
+
+	public FlightServiceRest() {
+		CtrlMNT mnt = new CtrlMNT(this);
+		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(mnt, 0, 200, TimeUnit.MILLISECONDS);
+	}
 
 	/**
 	 * Get flights.
 	 */
-
 	@RequestMapping(value = "/queryflights", method = RequestMethod.POST, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 	public String getTripFlights(@RequestParam String fromAirport, @RequestParam String toAirport,
 			@RequestParam Date fromDate, @RequestParam Date returnDate, @RequestParam Boolean oneWay)
 			throws ParseException {
 
 		String options = "";
-		
+
 		System.out.println(fromAirport);
 		System.out.println(toAirport);
 		System.out.println(fromDate);
@@ -81,7 +92,7 @@ public class FlightServiceRest {
 			options = "{\"tripFlights\":" + "[{\"numPages\":1,\"flightsOptions\": " + toFlights
 					+ ",\"currentPage\":0,\"hasMoreOptions\":false,\"pageSize\":10}], " + "\"tripLegs\":1}";
 		}
-		
+
 		this.doWork(90l);
 		return options;
 	}
@@ -107,7 +118,7 @@ public class FlightServiceRest {
 		Long miles = flightService.getRewardMiles(flightSegment);
 		RewardMilesResponse result = new RewardMilesResponse();
 		result.miles = miles;
-		
+
 		this.doWork(50l);
 		return result;
 	}
@@ -116,7 +127,7 @@ public class FlightServiceRest {
 	public String checkStatus() {
 		return "OK";
 	}
-	
+
 	private void doWork(long stime) {
 		FlightServiceRest.users.incrementAndGet();
 		Double isTime = Long.valueOf(stime).doubleValue();
@@ -128,5 +139,20 @@ public class FlightServiceRest {
 		} finally {
 			FlightServiceRest.users.decrementAndGet();
 		}
+	}
+
+	@Override
+	public Float getHw() {
+		return this.getHw();
+	}
+
+	@Override
+	public void setHw(Float hw) {
+		this.hw = hw;
+	}
+
+	@Override
+	public String getName() {
+		return this.msname;
 	}
 }
