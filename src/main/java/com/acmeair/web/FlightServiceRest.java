@@ -23,6 +23,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.math3.distribution.ExponentialDistribution;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -40,7 +41,7 @@ import ctrlmnt.CtrlMNT;
 
 @RestController
 @RequestMapping("/")
-public class FlightServiceRest implements ControllableService {
+public class FlightServiceRest extends ControllableService {
 
 	private static final AtomicInteger users = new AtomicInteger(0);
 
@@ -128,22 +129,9 @@ public class FlightServiceRest implements ControllableService {
 		return "OK";
 	}
 
-	private void doWork(long stime) {
-		FlightServiceRest.users.incrementAndGet();
-		Double isTime = Long.valueOf(stime).doubleValue();
-		Float d = (float) (isTime.floatValue() * (FlightServiceRest.users.floatValue() / this.hw));
-		try {
-			TimeUnit.MILLISECONDS.sleep(Math.max(Math.round(d), Math.round(isTime)));
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		} finally {
-			FlightServiceRest.users.decrementAndGet();
-		}
-	}
-
 	@Override
 	public Float getHw() {
-		return this.getHw();
+		return this.hw;
 	}
 
 	@Override
@@ -154,5 +142,20 @@ public class FlightServiceRest implements ControllableService {
 	@Override
 	public String getName() {
 		return this.msname;
+	}
+
+	@Override
+	public void egress() {
+		FlightServiceRest.users.decrementAndGet();
+	}
+
+	@Override
+	public Integer getUser() {
+		return FlightServiceRest.users.get();
+	}
+
+	@Override
+	public void ingress() {
+		FlightServiceRest.users.incrementAndGet();
 	}
 }
