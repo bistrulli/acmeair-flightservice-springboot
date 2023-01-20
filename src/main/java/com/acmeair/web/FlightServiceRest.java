@@ -58,8 +58,8 @@ public class FlightServiceRest extends ControllableService {
 	private String msname;
 
 	public FlightServiceRest() {
-		CtrlMNT mnt = new CtrlMNT(this);
-		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(mnt, 0, 500, TimeUnit.MILLISECONDS);
+//		CtrlMNT mnt = new CtrlMNT(this);
+//		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(mnt, 0, 500, TimeUnit.MILLISECONDS);
 	}
 
 	/**
