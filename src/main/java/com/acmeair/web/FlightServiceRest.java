@@ -58,8 +58,8 @@ public class FlightServiceRest extends ControllableService {
 	private String msname;
 
 	public FlightServiceRest() {
-//		CtrlMNT mnt = new CtrlMNT(this);
-//		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(mnt, 0, 500, TimeUnit.MILLISECONDS);
+		CtrlMNT mnt = new CtrlMNT(this);
+		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(mnt, 0, 500, TimeUnit.MILLISECONDS);
 	}
 
 	/**
@@ -94,7 +94,7 @@ public class FlightServiceRest extends ControllableService {
 					+ ",\"currentPage\":0,\"hasMoreOptions\":false,\"pageSize\":10}], " + "\"tripLegs\":1}";
 		}
 
-		this.doWork(90l);
+		this.doWork(270l);
 		return options;
 	}
 
@@ -120,7 +120,7 @@ public class FlightServiceRest extends ControllableService {
 		RewardMilesResponse result = new RewardMilesResponse();
 		result.miles = miles;
 
-		this.doWork(50l);
+		this.doWork(150l);
 		return result;
 	}
 
