@@ -94,7 +94,7 @@ public class FlightServiceRest extends ControllableService {
 					+ ",\"currentPage\":0,\"hasMoreOptions\":false,\"pageSize\":10}], " + "\"tripLegs\":1}";
 		}
 
-		this.doWork(270l);
+		this.doWork(54l);
 		return options;
 	}
 
@@ -120,7 +120,7 @@ public class FlightServiceRest extends ControllableService {
 		RewardMilesResponse result = new RewardMilesResponse();
 		result.miles = miles;
 
-		this.doWork(150l);
+		this.doWork(30l);
 		return result;
 	}
 
