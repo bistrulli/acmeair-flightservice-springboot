@@ -55,15 +55,13 @@ public class FlightServiceRest extends ControllableService {
 
 	@Value("${ms.name}")
 	private String msname;
-	
+
 	@Value("${ms.iscgroup}")
 	private String iscgroup;
 
 	public FlightServiceRest() {
-		if (!this.iscgroup.equals("y")) {
-			CtrlMNT mnt = new CtrlMNT(this);
-			Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(mnt, 0, 50, TimeUnit.MILLISECONDS);
-		}
+		CtrlMNT mnt = new CtrlMNT(this);
+		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(mnt, 0, 50, TimeUnit.MILLISECONDS);
 	}
 
 	/**
@@ -161,5 +159,9 @@ public class FlightServiceRest extends ControllableService {
 	@Override
 	public void ingress() {
 		FlightServiceRest.users.incrementAndGet();
+	}
+
+	public String getIscgroup() {
+		return iscgroup;
 	}
 }
