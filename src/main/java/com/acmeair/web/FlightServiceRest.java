@@ -23,7 +23,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.math3.distribution.ExponentialDistribution;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -58,7 +57,10 @@ public class FlightServiceRest extends ControllableService {
 	private String msname;
 
 	public FlightServiceRest() {
-		super();
+		if (!this.getIscgroup().equals("y")) {
+			CtrlMNT mnt = new CtrlMNT(this);
+			Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(mnt, 0, 50, TimeUnit.MILLISECONDS);
+		}
 	}
 
 	/**
