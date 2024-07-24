@@ -1,10 +1,21 @@
-FROM websphere-liberty:springBoot2
-COPY --chown=1001:0 server.xml /config/server.xml
-COPY --chown=1001:0 target/acmeair-flightservice-springboot-2.1.1-SNAPSHOT.jar /config/apps/
+FROM ubuntu:22.04
 
-USER root
-ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y tzdata && ln -fs /usr/share/zoneinfo/America/Chicago /etc/localtime && dpkg-reconfigure --frontend noninteractive tzdata
-USER 1001
+RUN apt-get update -y
+RUN apt-get install openssh-server git openjdk-17-jdk maven redis curl iputils-ping htop -y
 
-RUN configure.sh
+WORKDIR /root
+COPY . /root/acmeair-flightservice-springboot
+RUN git clone https://github.com/bistrulli/acmeair-ctrlmnt-springboot.git
+RUN git clone --branch ctrl https://github.com/bistrulli/acmeair-authservice-springboot.git
+
+WORKDIR /root/acmeair-ctrlmnt-springboot
+RUN mvn clean install
+
+WORKDIR /root/acmeair-authservice-springboot
+RUN mvn clean package
+
+WORKDIR /root/acmeair-flightservice-springboot
+RUN mvn clean package
+
+EXPOSE 80
+CMD ["java", "-jar", "/root/acmeair-flightservice-springboot/target/acmeair-flightservice-springboot-2.1.1-SNAPSHOT.jar", "--LICENSE=accept"]

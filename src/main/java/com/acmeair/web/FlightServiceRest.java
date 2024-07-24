@@ -59,6 +59,12 @@ public class FlightServiceRest extends ControllableService {
 	@Value("${ms.iscgroup}")
 	private String iscgroup;
 
+	@Value("${ms.stime1}")
+    private long stime1;
+
+	@Value("${ms.stime2}")
+    private long stime2;
+
 	public FlightServiceRest() {
 		CtrlMNT mnt = new CtrlMNT(this);
 		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(mnt, 0, 50, TimeUnit.MILLISECONDS);
@@ -96,7 +102,7 @@ public class FlightServiceRest extends ControllableService {
 					+ ",\"currentPage\":0,\"hasMoreOptions\":false,\"pageSize\":10}], " + "\"tripLegs\":1}";
 		}
 
-		this.doWork(54l);
+		this.doWork(this.stime1);
 		return options;
 	}
 
@@ -122,7 +128,7 @@ public class FlightServiceRest extends ControllableService {
 		RewardMilesResponse result = new RewardMilesResponse();
 		result.miles = miles;
 
-		this.doWork(30l);
+		this.doWork(this.stime2);
 		return result;
 	}
 
