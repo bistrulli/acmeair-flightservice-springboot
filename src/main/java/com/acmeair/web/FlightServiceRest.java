@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,12 +38,20 @@ import com.acmeair.service.FlightService;
 
 import ctrlmnt.ControllableService;
 import ctrlmnt.CtrlMNT;
+import ctrlmnt.MonitoringThread;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 @RestController
 @RequestMapping("/")
 public class FlightServiceRest extends ControllableService {
 
 	private static final AtomicInteger users = new AtomicInteger(0);
+
+	private static final Logger logger = Logger.getLogger(FlightServiceRest.class.getName());
 
 	@Autowired
 	private FlightService flightService;
@@ -59,15 +68,21 @@ public class FlightServiceRest extends ControllableService {
 	@Value("${ms.iscgroup}")
 	private String iscgroup;
 
-	@Value("${ms.stime1}")
-    private long stime1;
+	@Value("${ms.stime.queryflights}")
+    private long stimeQueryFlights;
 
-	@Value("${ms.stime2}")
-    private long stime2;
+	@Value("${ms.stime.getrewardmiles}")
+    private long stimeGetRewardMiles;
+
+    private MonitoringThread monitor = null;
 
 	public FlightServiceRest() {
 		CtrlMNT mnt = new CtrlMNT(this);
 		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(mnt, 0, 50, TimeUnit.MILLISECONDS);
+
+		monitor = new MonitoringThread();
+        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+        executorService.scheduleAtFixedRate(monitor, 0, 30, TimeUnit.SECONDS);
 	}
 
 	/**
@@ -77,6 +92,9 @@ public class FlightServiceRest extends ControllableService {
 	public String getTripFlights(@RequestParam String fromAirport, @RequestParam String toAirport,
 			@RequestParam Date fromDate, @RequestParam Date returnDate, @RequestParam Boolean oneWay)
 			throws ParseException {
+
+		ControllableService.activeRequests.incrementAndGet();
+		long startTime = System.currentTimeMillis(); // TODO nanotime
 
 		String options = "";
 
@@ -102,7 +120,16 @@ public class FlightServiceRest extends ControllableService {
 					+ ",\"currentPage\":0,\"hasMoreOptions\":false,\"pageSize\":10}], " + "\"tripLegs\":1}";
 		}
 
-		this.doWork(this.stime1);
+		this.doWork(this.stimeQueryFlights);
+		
+		logger.info("New request arrived. Total:" + ControllableService.requestCount.addAndGet(1));
+		long endTime = System.currentTimeMillis();
+        long elapsedTime = endTime - startTime; // Elapsed time in milliseconds
+        logger.info("Single request service time: " + elapsedTime + " ms");
+
+        logger.info("Current serviceTimeSum: " + ControllableService.serviceTimesSum.addAndGet(elapsedTime) + " ms");
+        ControllableService.activeRequests.decrementAndGet();
+
 		return options;
 	}
 
@@ -118,6 +145,9 @@ public class FlightServiceRest extends ControllableService {
 
 	) {
 
+		ControllableService.activeRequests.incrementAndGet();
+		long startTime = System.currentTimeMillis(); // TODO nanotime
+
 		if (secUtils.secureServiceCalls()) {
 			String body = "flightSegment=" + flightSegment;
 			secUtils.verifyBodyHash(body, headerSigBody);
@@ -128,7 +158,16 @@ public class FlightServiceRest extends ControllableService {
 		RewardMilesResponse result = new RewardMilesResponse();
 		result.miles = miles;
 
-		this.doWork(this.stime2);
+		this.doWork(this.stimeGetRewardMiles);
+
+		logger.info("New request arrived. Total:" + ControllableService.requestCount.addAndGet(1));
+		long endTime = System.currentTimeMillis();
+	    long elapsedTime = endTime - startTime; // Elapsed time in milliseconds
+	    logger.info("Single request service time: " + elapsedTime + " ms");
+
+	    logger.info("Current serviceTimeSum: " + ControllableService.serviceTimesSum.addAndGet(elapsedTime) + " ms");
+	    ControllableService.activeRequests.decrementAndGet();
+		
 		return result;
 	}
 
